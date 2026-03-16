@@ -49,9 +49,30 @@ class Nave(UnidadCombate, metaclass=ABCMeta):
 class EstacionEspacial(Nave):
     def __init__(self, idCombate, claveCifrada, nombre, catalogoPiezas, tripulacion:int, pasaje:int, ubicacion:EUbicacion):
         super().__init__(idCombate, claveCifrada, nombre, catalogoPiezas)
+        if not isinstance(tripulacion, int):
+            raise TypeError("tripulacion TIENE QUE SER int")
+        
+        if not isinstance(pasaje, int):
+            raise TypeError("pasaje TIENE QUE SER int")
+        
+        if not isinstance(ubicacion, EUbicacion):
+            raise TypeError("ubicacion DEBE PERTENECER A EUbicacion")
+        
+        if tripulacion < 0 or pasaje < 0:
+            raise ValueError("DEBE SER POSITIVO")
+        
         self.__tripulacion = tripulacion
         self.__pasaje = pasaje
         self.__ubicacion = ubicacion
+
+    def calcularCapacidad(self)->int:
+        capacidad_total = self.__tripulacion + self.__pasaje
+        return capacidad_total
+    
+    def actualizarUbicacion(self, nueva_ubicacion:EUbicacion)->None:
+        if not isinstance(nueva_ubicacion, EUbicacion):
+            raise TypeError("nueva_ubicacion DEBE PERTENECER A EUbicacion")
+        self.__ubicacion = nueva_ubicacion    
 
 class NaveEstelar(Nave):
     def __init__(self, idCombate, claveCifrada, nombre, catalogoPiezas, tripulacion:int, pasaje:int, clase:EClaseNave):
