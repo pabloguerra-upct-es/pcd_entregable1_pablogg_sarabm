@@ -152,6 +152,15 @@ class EstacionEspacial(Nave):
 class NaveEstelar(Nave):
     def __init__(self, idCombate, claveCifrada, nombre, catalogoPiezas, tripulacion:int, pasaje:int, clase:EClaseNave):
         super().__init__(idCombate, claveCifrada, nombre, catalogoPiezas)
+        if not isinstance(tripulacion, int):
+            raise TypeError("tripulacion TIENE QUE SER int")
+        
+        if not isinstance(pasaje, int):
+            raise TypeError("pasaje TIENE QUE SER int")
+        
+        if not isinstance(clase, EClaseNave):
+            raise TypeError("clase TIENE QUE PERTENECER A EClaseNave")
+        
         self.__tripulacion = tripulacion
         self.__pasaje = pasaje
         self.__clase = clase
@@ -159,6 +168,9 @@ class NaveEstelar(Nave):
     def transmitirMensaje(self, mensaje:str):
         super().transmitirMensaje(mensaje)
         print(f"Nave Estelar {self._idCombate}: {mensaje}")
+
+    def obtenerClase(self):
+        return self.__clase
 
 class CazaEstelar(Nave):
     def __init__(self, idCombate, claveCifrada, nombre, catalogoPiezas, dotacion:int):
