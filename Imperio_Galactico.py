@@ -14,6 +14,9 @@ class EClaseNave(Enum):
 class AccesoDenegado(Exception):
     pass
 
+class EmptyError(Exception):
+    pass
+
 class UnidadCombate(metaclass=ABCMeta):
     def __init__(self, idCombate:str, claveCifrada:int):
         if not isinstance(idCombate, str):
@@ -46,6 +49,37 @@ class Nave(UnidadCombate, metaclass=ABCMeta):
         self._nombre = nombre
         self._catalogoPiezas = catalogoPiezas
 
+    @abstractmethod
+    def transmitirMensaje(self, mensaje: str):
+        pass
+    
+    def consultarCatalogo(self):
+        if len(self._catalogoPiezas) == 0:
+            raise EmptyError("El catalogo esta vacio")
+        
+        return self._catalogoPiezas
+    
+    def solicitarRepuesto(self, repuesto:Repuesto, cantidad:int):
+
+        if not isinstance(repuesto, Repuesto):
+            raise TypeError("repuesto TIENE QUE SER Repuesto")
+        
+        if not isinstance(cantidad, int):
+            raise TypeError("cantidad TIENE QUE SER int")
+        
+        if repuesto.nombre not in self._catalogoPiezas:
+            print(f"{repuesto.nombre} NO se encuentra en el catalogo de repuestos disponibles")
+            return False
+
+        cantidad_stock = repuesto.obtenerUnidades()
+
+        if cantidad > cantidad_stock:
+            print(f"No hay suficientes {repuesto.nombre} en stock")
+            return False
+        
+        repuesto.reducirStock(cantidad)
+        return True
+
 class EstacionEspacial(Nave):
     def __init__(self, idCombate, claveCifrada, nombre, catalogoPiezas, tripulacion:int, pasaje:int, ubicacion:EUbicacion):
         super().__init__(idCombate, claveCifrada, nombre, catalogoPiezas)
@@ -74,6 +108,10 @@ class EstacionEspacial(Nave):
             raise TypeError("nueva_ubicacion DEBE PERTENECER A EUbicacion")
         self.__ubicacion = nueva_ubicacion    
 
+    def transmitirMensaje(self, mensaje:str):
+        super().transmitirMensaje(mensaje)
+        print(f"Estacion Estelar {self._idCombate}: {mensaje}")
+
 class NaveEstelar(Nave):
     def __init__(self, idCombate, claveCifrada, nombre, catalogoPiezas, tripulacion:int, pasaje:int, clase:EClaseNave):
         super().__init__(idCombate, claveCifrada, nombre, catalogoPiezas)
@@ -81,10 +119,18 @@ class NaveEstelar(Nave):
         self.__pasaje = pasaje
         self.__clase = clase
 
+    def transmitirMensaje(self, mensaje:str):
+        super().transmitirMensaje(mensaje)
+        print(f"Nave Estelar {self._idCombate}: {mensaje}")
+
 class CazaEstelar(Nave):
     def __init__(self, idCombate, claveCifrada, nombre, catalogoPiezas, dotacion:int):
         super().__init__(idCombate, claveCifrada, nombre, catalogoPiezas)
         self.__dotacion = dotacion
+
+    def transmitirMensaje(self, mensaje:str):
+        super().transmitirMensaje(mensaje)
+        print(f"Caza Estelar {self._idCombate}: {mensaje}")
 
 class Usuario(metaclass=ABCMeta):
     def __init__(self, idUsuario:str, nombre:str):
@@ -108,7 +154,43 @@ class Repuesto:
 
 class Almacen:
     def __init__(self, nombre:str, ubicacion:str, catalogoRepuestos:list[Repuesto]):
+        if not isinstance(nombre, str):
+            raise TypeError("nombre TIENE QUE SER str")
+        
+        if not isinstance(ubicacion, str):
+            raise TypeError("ubicacion TIENE QUE SER str")
+        
+        if not all(isinstance(r, Repuesto) for r in catalogoRepuestos):
+                    raise TypeError("El catálogo solo debe contener objetos Repuesto")
+        
         self.nombre = nombre
         self.ubicacion = ubicacion
-        self.__catalogoRepuestos = catalogoRepuestos
+        self.__catalogoRepuestos = list(Repuesto)
+
+    def añadirRepuesto(self, repuesto:Repuesto)->None:
+        if not isinstance(repuesto, Repuesto):
+            raise TypeError("repuesto TIENE QUE SER Repuesto")
+        
+        self.__catalogoRepuestos.append(repuesto)
+
+    def eliminarRepuesto(self, repuesto:Repuesto):
+        if not isinstance(repuesto, Repuesto):
+            raise TypeError("repuesto TIENE QUE SER Repuesto")
+        
+        for i in self.__catalogoRepuestos:
+            if i.nombre == repuesto.nombre:
+                self.__catalogoRepuestos.pop(i)
+            else:
+                print(f"{repuesto.nombre} NO se encuentra en la lista de repuestos")
+
+    def buscarRepuesto(self, repuesto:Repuesto):
+        if not isinstance(repuesto, Repuesto):
+            raise TypeError("repuesto TIENE QUE SER Repuesto")
+        
+        for i in self.__catalogoRepuestos:
+            if i.nombre == repuesto.nombre:
+                return True
+        return False
+
+    
 
