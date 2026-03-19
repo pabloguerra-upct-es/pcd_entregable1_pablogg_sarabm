@@ -17,6 +17,9 @@ class AccesoDenegado(Exception):
 class EmptyError(Exception):
     pass
 
+class StockError(Exception):
+    pass
+
 class UnidadCombate(metaclass=ABCMeta):
     def __init__(self, idCombate:str, claveCifrada:int):
         if not isinstance(idCombate, str):
@@ -183,12 +186,82 @@ class CazaEstelar(Nave):
 
 class Usuario(metaclass=ABCMeta):
     def __init__(self, idUsuario:str, nombre:str):
+        if not isinstance(idUsuario, str):
+            raise TypeError("idUsuario TIENE QUE SER str")
+        
+        if not isinstance(nombre, str):
+            raise TypeError("nombre TIENE QUE SER str")
+        
         self._idUsuario = idUsuario
         self._nombre = nombre
+
+    @abstractmethod
+    def iniciarSesion(self):
+        pass
+
+    @abstractmethod
+    def cerrarSesion(self):
+        pass
 
 class Comandante(Usuario):
     def __init__(self, idUsuario, nombre):
         super().__init__(idUsuario, nombre)
+        
+        self._repuestosSolicitados = []
+
+    def iniciarSesion(self):
+        super().iniciarSesion()
+        print(f"Comandante {self._nombre} con id {self._idUsuario} ha iniciado sesion")
+
+    def cerrarSesion(self):
+        super().cerrarSesion()
+        print(f"Comandante {self._nombre} con id {self._idUsuario} ha cerrado sesion")
+
+    def consultarRepuesto(self, repuesto:Repuesto, almacen:Almacen):
+        if not isinstance(repuesto, Repuesto):
+            raise TypeError("repuesto TIENE QUE PERTENECER A LA CLASE Repuesto")
+        
+        if not isinstance(almacen, Almacen):
+            raise TypeError("almacen TIENE QUE PERTENECER A Almacen")
+        
+        if almacen.consultarStock(repuesto.nombre): # Buscamos que sea True
+            print(f"{repuesto.nombre} se encuentra en el almacen")
+            return True
+        
+        return False
+
+    def solicitarRepuesto(self, repuesto:Repuesto, almacen:Almacen, lista_repuestos:list):
+        if not isinstance(repuesto, Repuesto):
+            raise TypeError("repuestos TIENE QUE PERTENECER A Repuesto")
+        
+        if not isinstance(almacen, Almacen):
+            raise TypeError("almacen TIENE QUE PERTENECER A Almacen")
+        
+        if self.consultarRepuesto(repuesto, almacen) == False:
+            raise StockError(f"El repuesto solicitado NO se encuentra en stock")
+        
+        self._repuestosSolicitados.append(repuesto)
+        print(f"{repuesto.nombre} añadido a la lista de repuestos solicitados")
+
+    def realizarPedido(self, almacen:Almacen):
+        if len(self._repuestosSolicitados) == 0:
+            raise EmptyError("La lista de repuestos solicitados esta vacia")
+        
+        if not isinstance(almacen, Almacen):
+            raise TypeError("almacen TIENE QUE PERTENECER A Almacen")
+        
+        for i in self._repuestosSolicitados:
+            if not self.consultarRepuesto(i, almacen):
+                raise StockError(f"{i.nombre} NO se encuentra ya en stock")
+            
+            
+        for j in self._repuestosSolicitados:
+            almacen.eliminarRepuesto(j)
+
+        self._repuestosSolicitados = []
+            
+        print("Su pedido se ha realizado con exito") 
+
 
 class OperarioAlmacen(Usuario):
     def __init__(self, idUsuario, nombre):
