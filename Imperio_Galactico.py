@@ -408,20 +408,6 @@ class Almacen:
         for i in self.__catalogoRepuestos:
             print(f"Nombre: {i.nombre}\tProveedor: {i.proveedor}\nPrecio: {i.precio}")
 
-    def cantidadRepuesto(self, repuesto:Repuesto)->int:
-        '''Esta funcion se encarga de mostrar el numero de repuestos
-        existentes en el almacen'''
-
-        '''Comprobamos que el tipo de dato introducido es correcto'''
-
-        if not isinstance(repuesto, Repuesto):
-            raise TypeError("repuesto debe ser un objeto de la clase Repuesto")
-        
-        if not self.buscarRepuesto(repuesto.nombre):
-            raise StockError("El repuesto que buscas no se encuentra en Stock")
-        
-        return repuesto.obtenerUnidades()
-
 class Comandante(Usuario):
     '''Clase hija de la clase Usuario que modela a los comandantes del
     Imperio Galactico. Esta clase hereda los atributos del padre'''
@@ -486,7 +472,7 @@ class Comandante(Usuario):
         if self.consultarRepuesto(repuesto.nombre, almacen) == False:
             raise StockError(f"El repuesto solicitado NO se encuentra en stock")
 
-        if almacen.cantidadRepuesto(repuesto) < cantidad:
+        if repuesto.obtenerUnidades() < cantidad:
             raise ValueError("La cantidad pedida es mayor a la habida en almacen")
         
         self._repuestosSolicitados[repuesto.nombre] = cantidad
@@ -570,5 +556,5 @@ class OperarioAlmacen(Usuario):
         if not almacen.buscarRepuesto(repuesto.nombre):
             print(f"{repuesto.nombre} NO se encuentra en el almacen")
         else:
-            almacen.eliminarRepuesto(repuesto.nombre)  
+            almacen.eliminarRepuesto(repuesto.nombre) 
 
