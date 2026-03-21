@@ -207,7 +207,7 @@ class Comandante(Usuario):
     def __init__(self, idUsuario, nombre):
         super().__init__(idUsuario, nombre)
         
-        self._repuestosSolicitados = []
+        self._repuestosSolicitados = {}
 
     def iniciarSesion(self):
         super().iniciarSesion()
@@ -224,23 +224,36 @@ class Comandante(Usuario):
         if not isinstance(almacen, Almacen):
             raise TypeError("almacen TIENE QUE PERTENECER A Almacen")
         
-        if almacen.consultarStock(repuesto.nombre): # Buscamos que sea True
+        if almacen.buscarRepuesto(repuesto.nombre):
             print(f"{repuesto.nombre} se encuentra en el almacen")
             return True
         
+        print(f"{repuesto.nombre} no se encuentra en el almacen")
         return False
 
-    def solicitarRepuesto(self, repuesto:Repuesto, almacen:Almacen, lista_repuestos:list):
+    def solicitarRepuesto(self, repuesto:Repuesto, almacen:Almacen, lista_repuestos:list, cantidad:int):
         if not isinstance(repuesto, Repuesto):
             raise TypeError("repuestos TIENE QUE PERTENECER A Repuesto")
         
         if not isinstance(almacen, Almacen):
             raise TypeError("almacen TIENE QUE PERTENECER A Almacen")
         
+        if not isinstance(cantidad, int):
+            raise TypeError("cantidad TIENE QUE SER int")
+        
+        if cantidad < 0:
+            raise ValueError("cantidad DEBE SER MAYOR QUE 0")
+        
+        if not isinstance(cantidad, int):
+            raise TypeError("cantidad TIENE QUE SER int")
+        
         if self.consultarRepuesto(repuesto, almacen) == False:
             raise StockError(f"El repuesto solicitado NO se encuentra en stock")
+
+        if almacen.cantidadRepuesto(repuesto.nombre) < cantidad:
+            raise ValueError("La cantidad pedida es mayor a la habida en almacen")
         
-        self._repuestosSolicitados.append(repuesto)
+        self._repuestosSolicitados[repuesto.nombre] = cantidad
         print(f"{repuesto.nombre} añadido a la lista de repuestos solicitados")
 
     def realizarPedido(self, almacen:Almacen):
@@ -250,22 +263,46 @@ class Comandante(Usuario):
         if not isinstance(almacen, Almacen):
             raise TypeError("almacen TIENE QUE PERTENECER A Almacen")
         
-        for i in self._repuestosSolicitados:
+        for i in self._repuestosSolicitados.keys():
             if not self.consultarRepuesto(i, almacen):
                 raise StockError(f"{i.nombre} NO se encuentra ya en stock")
             
-            
-        for j in self._repuestosSolicitados:
-            almacen.eliminarRepuesto(j)
+        for k, v in self._repuestosSolicitados.items():
+            almacen.eliminarRepuesto(k)
 
-        self._repuestosSolicitados = []
+        self._repuestosSolicitados = {}
             
         print("Su pedido se ha realizado con exito") 
-
 
 class OperarioAlmacen(Usuario):
     def __init__(self, idUsuario, nombre):
         super().__init__(idUsuario, nombre)
+
+    def iniciarSesion(self):
+        super().iniciarSesion()
+        print(f"Operario de Almacen {self._nombre} con id {self._idUsuario} ha iniciado sesion")
+
+    def cerrarSesion(self):
+        super().cerrarSesion()
+        print(f"Operario de Almacen {self._nombre} con id {self._idUsuario} ha cerrado sesion")
+
+    def añadirRepuesto(self, repuesto:Repuesto, almacen:Almacen):
+        if not isinstance(repuesto, Repuesto):
+            raise TypeError("repuesto TIENE QUE PERTENECER A Repuesto")
+        
+        if not isinstance(almacen, Almacen):
+            raise TypeError("almacen TIENE QUE PERTENECER A Almacen")
+        
+        almacen.añadirRepuesto(repuesto)
+
+    def eliminarRepuesto(self, repuesto:Repuesto, almacen:Almacen):
+        if not isinstance(repuesto, Repuesto):
+            raise TypeError("repuesto TIENE QUE PERTENECER A Repuesto")
+        
+        if not isinstance(almacen, Almacen):
+            raise TypeError("almacen TIENE QUE PERTENECER A Almacen")
+
+        almacen.eliminarRepuesto(repuesto)         
 
 class Almacen:
     def __init__(self, nombre:str, ubicacion:str, catalogoRepuestos:list[Repuesto]):
@@ -280,7 +317,7 @@ class Almacen:
         
         self.nombre = nombre
         self.ubicacion = ubicacion
-        self.__catalogoRepuestos = list(Repuesto)
+        self.__catalogoRepuestos = catalogoRepuestos
 
     def añadirRepuesto(self, repuesto:Repuesto)->None:
         if not isinstance(repuesto, Repuesto):
@@ -288,15 +325,15 @@ class Almacen:
         
         self.__catalogoRepuestos.append(repuesto)
 
-    def eliminarRepuesto(self, repuesto:Repuesto):
-        if not isinstance(repuesto, Repuesto):
-            raise TypeError("repuesto TIENE QUE SER Repuesto")
+    def eliminarRepuesto(self, repuesto:str):
+        if not isinstance(repuesto, str):
+            raise TypeError("repuesto TIENE QUE SER str")
         
         for i in self.__catalogoRepuestos:
-            if i.nombre == repuesto.nombre:
-                self.__catalogoRepuestos.pop(i)
+            if i.nombre == repuesto:
+                self.__catalogoRepuestos.remove(i)
             else:
-                print(f"{repuesto.nombre} NO se encuentra en la lista de repuestos")
+                print(f"{repuesto} NO se encuentra en la lista de repuestos")
 
     def buscarRepuesto(self, repuesto:Repuesto):
         if not isinstance(repuesto, Repuesto):
@@ -306,6 +343,22 @@ class Almacen:
             if i.nombre == repuesto.nombre:
                 return True
         return False
-
     
+    def consultarStock(self, repuesto:Repuesto):
+        if not isinstance(repuesto, Repuesto):
+            raise TypeError("repuesto TIENE QUE PERTENECER A Repuesto")
+        
+        if len(self.__catalogoRepuestos) == 0:
+            raise StockError("El stock del almacen esta vacio")
+        
+        for i in self.__catalogoRepuestos:
+            print(f"Nombre: {i.nombre}\tProveedor: {i.proveedor}\nPrecio: {i.precio}")
 
+    def cantidadRepuesto(self, repuesto:Repuesto):
+        if not isinstance(repuesto, Repuesto):
+            raise TypeError("repuesto TIENE QUE PERTENECER A Repuesto")
+        
+        if not self.buscarRepuesto(repuesto):
+            raise StockError("El repuesto que buscas no se encuentra en Stock")
+        
+        return repuesto.__cantidad
