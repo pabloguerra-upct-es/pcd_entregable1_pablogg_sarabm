@@ -231,7 +231,7 @@ class EstacionEspacial(Nave):
 
         self.__ubicacion = nueva_ubicacion    
 
-    def transmitirMensaje(self, mensaje:str, clave:int)->str:
+    def transmitirMensaje(self, mensaje:str, clave:int)->None:
         '''Esta funcion se encarga de transmitir un mensaje, verificando
         previamente si la clave es correcta'''
 
@@ -260,7 +260,7 @@ class NaveEstelar(Nave):
         self.__pasaje = pasaje
         self.__clase = clase
 
-    def transmitirMensaje(self, mensaje:str, clave:int)->str:
+    def transmitirMensaje(self, mensaje:str, clave:int)->None:
         '''Esta funcion se encarga de transmitir un mensaje, verificando 
         previamente si la clave dada es correcta'''
 
@@ -288,14 +288,14 @@ class CazaEstelar(Nave):
         if dotacion < 0:
             raise ValueError("dotacion debe ser positivo o 0")
 
-    def transmitirMensaje(self, mensaje:str, clave:int)->str:
+    def transmitirMensaje(self, mensaje:str, clave:int)->None:
         '''Esta funcion se encarga de transmitir un mensaje, verificando
         previamente si la clave es correcta'''
 
         super().transmitirMensaje(mensaje, clave)
         print(f"Caza Estelar {self._idCombate}: {mensaje}")
 
-    def desplegarPiloto(self)->str:
+    def desplegarPiloto(self)->None:
         '''Esta funcion se encarga de desplegar a un piloto en un caza'''
         if self.__dotacion == 0:
             print("No se puede desplegar ningun piloto")
@@ -452,7 +452,7 @@ class Comandante(Usuario):
         print(f"{repuesto} no se encuentra en el almacen")
         return False
 
-    def solicitarRepuesto(self, repuesto:Repuesto, almacen:Almacen, lista_repuestos:list, cantidad:int)->None:
+    def solicitarRepuesto(self, repuesto:Repuesto, almacen:Almacen, cantidad:int)->None:
         '''Esta funcion se encarga de realizar un pedido de varios repuestos'''
         
         '''Comprobamos que el tipo de dato introducido es correcto'''
@@ -558,3 +558,50 @@ class OperarioAlmacen(Usuario):
         else:
             almacen.eliminarRepuesto(repuesto.nombre) 
 
+'''Codigo para comprobar el buen funcionamiento del codigo'''
+if __name__ == "__main__":
+
+    '''Creacion de 2 objetos de la clase Repuesto'''
+    motor = Repuesto("Motor", "Amazon", 10, 15000.0)
+    turbina = Repuesto("Turbina", "Carrefour", 5, 2000.50)
+
+    '''Creacion de dos objetos, uno del tipo almacen y el otro del tipo operario'''
+    almacen = Almacen("Almacén", "Almacen A", [motor])
+    operario = OperarioAlmacen("12345", "Pablo Guerra")
+
+    operario.iniciarSesion()
+    # El operario añade un repuesto nuevo
+    operario.añadirRepuesto(turbina, almacen)
+    operario.cerrarSesion()
+    print("")
+
+    '''Creamos 2 objetos, uno de la clase EstacionEspacial y otro de la clase CazaEstelar'''
+    # El catálogo de la Estación incluye el motor
+    UPCT = EstacionEspacial("24680", 1234, "UPCT", 
+                                  ["Motor", "Turbina"], 
+                                  50000, 100000, EUbicacion.ENDOR)
+    
+    UMA = CazaEstelar("13579", 9999, "UMA", ["Motor"], 1)
+
+    # Probamos la transmision del mensaje
+    try:
+        UMA.transmitirMensaje("Atacando naves", 9999) # Clave correcta
+        UPCT.transmitirMensaje("Sistemas operativos", 0000)     # Clave incorrecta
+    except AccesoDenegado as e:
+        print(f"Bloqueo de seguridad: {e}")
+    print("")
+
+    '''Creamos un objeto de la clase Comandante'''
+    sara = Comandante("12457", "Sara")
+    sara.iniciarSesion()
+
+    # El comandante solicita piezas al almacén
+    sara.solicitarRepuesto(motor, almacen, 2)
+    sara.solicitarRepuesto(turbina, almacen, 1)
+
+    # Realiza el pedido final
+    sara.realizarPedido(almacen)
+    
+    # Verifica el stock restante tras el pedido
+    print(f"\nStock restante de motores: {motor.obtenerUnidades()} unidades.")
+    sara.cerrarSesion()
