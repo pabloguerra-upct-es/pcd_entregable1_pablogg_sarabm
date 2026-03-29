@@ -602,6 +602,7 @@ if __name__ == "__main__":
     # Realiza el pedido final
     sara.realizarPedido(almacen)
     
-    # Verifica el stock restante tras el pedido
+    # Verifica el stock que queda tras el pedido
     print(f"\nStock restante de motores: {motor.obtenerUnidades()} unidades.")
     sara.cerrarSesion()
+
